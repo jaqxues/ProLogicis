@@ -22,8 +22,11 @@ fun main(args: Array<String>) {
 
 
     val s1 = (not(A implies B)) or (C iif D)
-    val s2 = (not(A) and not(B)) implies not(A and B)
+    val s2 = (not(A) or not(B)) implies not(A or B)
     val conclusion = not(C) or D
+//    val s1 = A or B
+//    val s2 = D and C
+//    val conclusion = A implies B
 
 
     performTreeAlgorithm(s1, s2, entails = conclusion)

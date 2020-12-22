@@ -24,12 +24,15 @@ fun performTreeAlgorithm(vararg premisses: Sentence, entails: Sentence) = buildS
 
     println(formatTreeAsLatex(*premisses, conclusionNode = conclusionNode))
 
-    println(conclusionNode.leaves.toSet())
     var openLeaves: List<SentenceNode>
     while (conclusionNode.openLeaves.toList().also {
             openLeaves = it
-    }.isNotEmpty()) {
-        val toDecompose = openLeaves.random().parents.toList().filter { it.content.decomposedAt == -1 }.randomOrNull()
+        }.isNotEmpty()) {
+        val toDecompose =
+            openLeaves.first().withAllParents.toList().filter { it.content.decomposedAt == -1 }.minByOrNull {
+                val s = it.content.sentence
+                if (s is And || (s is Not && (s.sentence is Or || s.sentence is Implication))) 0 else 1
+            }
         if (toDecompose == null) {
             println("Unclosed Leaf")
             break
@@ -39,16 +42,22 @@ fun performTreeAlgorithm(vararg premisses: Sentence, entails: Sentence) = buildS
             subLeaf.decompose(toDecompose.content.sentence)
         }
     }
-
+//    val (premisses, conclusionNode) = formExampleTree()
     println(formatTreeAsLatex(*premisses, conclusionNode = conclusionNode))
 }
 
-private fun formExampleTree(): SentenceNode {
+private fun formExampleTree(): Pair<Array<Sentence>, SentenceNode> {
     val A = Symbol("A")
     val B = Symbol("B")
     val C = Symbol("C")
     val D = Symbol("D")
-    val conclusionNode = Node(NodeContent(not(not(C) or D), 0))
+
+
+    val s1 = (not(A implies B)) or (C iif D)
+    val s2 = (not(A) and not(B)) implies not(A and B)
+    val conclusion = not(C) or D
+
+    val conclusionNode = Node(NodeContent(not(conclusion), 0))
     var node = Node(NodeContent(C, 0), conclusionNode)
     conclusionNode.addChild(node)
     node.addChild(Node(NodeContent(not(D), 0), node).also { node = it })
@@ -78,7 +87,7 @@ private fun formExampleTree(): SentenceNode {
     nnb2.addChild(nnb2na)
     nnb2na.addChild(Node(NodeContent(not(B), 0), nnb2na))
 
-    return conclusionNode
+    return arrayOf(s1, s2) to conclusionNode
 }
 
 val Sentence.isPrimitive get() = this is Symbol || (this is Not && this.sentence is Symbol)
@@ -138,9 +147,9 @@ fun SentenceNode.decompose(sentence: Sentence) {
         }
         is Equality -> {
             val node11 = unexploredNode(sentence.s1, this)
-            val node12 = unexploredNode(sentence.s2, this)
+            val node12 = unexploredNode(sentence.s2, node11)
             val node21 = unexploredNode(not(sentence.s1), this)
-            val node22 = unexploredNode(not(sentence.s2), this)
+            val node22 = unexploredNode(not(sentence.s2), node21)
             this.addChild(node11)
             this.addChild(node21)
             node11.addChild(node12)
@@ -205,11 +214,11 @@ val Sentence.latexFormat: String
 
 val SentenceNode.latexFormat: String
     get() = buildString {
-        if ((sequenceOf(this@latexFormat) + allChildren).any { it.children.size > 1 }) {
+        if (withAllChildren.any { it.children.size > 1 }) {
             append(" [.")
             append("{")
             var current = this@latexFormat
-            while(current.parent!!.children.size <= 1 || current == this@latexFormat) {
+            while (current.parent!!.children.size <= 1 || current == this@latexFormat) {
                 append("{\$")
                 append(current.content.sentence.latexFormat)
                 append("\$}")
@@ -218,7 +227,6 @@ val SentenceNode.latexFormat: String
             }
             current = current.parent!!
             append("} ")
-            println(current.children)
             current.children.forEach {
                 append(it.latexFormat)
                 append(' ')
@@ -227,7 +235,7 @@ val SentenceNode.latexFormat: String
             return@buildString
         }
         append('{')
-        (sequenceOf(this@latexFormat) + allChildren).joinTo(this, separator = "\\\\") {
+        withAllChildren.joinTo(this, separator = "\\\\") {
             "{\$${it.content.sentence.latexFormat}\$}"
         }
         append('}')
@@ -238,43 +246,47 @@ class Node<T>(val content: T, val parent: Node<T>? = null, val children: Mutable
         children.add(child)
     }
 
-    val leaves get() = sequence {
-        val q = ArrayDeque(listOf(this@Node))
-        while (q.isNotEmpty()) {
-            val it = q.iterator()
-            while (it.hasNext()) {
-                val node = it.next()
-                if (node.children.size == 0)
-                    yield(node)
-                else
-                    q.addAll(node.children)
-                it.remove()
+    val leaves
+        get() = sequence {
+            val q = ArrayDeque(listOf(this@Node))
+            while (q.isNotEmpty()) {
+                val it = q.iterator()
+                while (it.hasNext()) {
+                    val node = it.next()
+                    if (node.children.size == 0)
+                        yield(node)
+                    else
+                        q.addAll(node.children)
+                    it.remove()
+                }
             }
         }
-    }
 
-    val parents get() = sequence {
-        var parent = this@Node.parent
-        while (parent != null) {
-            yield(parent)
-            parent = parent.parent
+    val withAllParents
+        get() = sequence {
+            var parent: Node<T>? = this@Node
+            while (parent != null) {
+                yield(parent)
+                parent = parent.parent
+            }
         }
-    }
 
-    val allChildren get() = sequence {
-        var q = ArrayDeque(children)
-        while (q.isNotEmpty()) {
-            yieldAll(q)
-            q = q.flatMapTo(ArrayDeque()) { it.children }
+    val withAllChildren
+        get() = sequence {
+            var q = ArrayDeque(listOf(this@Node))
+            while (q.isNotEmpty()) {
+                yieldAll(q)
+                q = q.flatMapTo(ArrayDeque()) { it.children }
+            }
         }
-    }
 }
 
 
 @Suppress("UNCHECKED_CAST")
-val SentenceNode.openLeaves get() = leaves.filter { leaf ->
-    val allSentences = leaf.parents.mapTo(mutableSetOf()) { it.content.sentence }
-    val negated: Set<Not> = allSentences.filterTo(mutableSetOf()) { it is Not } as Set<Not>
-    val truthy = allSentences - negated
-    (negated.mapTo(mutableSetOf()) { it.sentence } intersect truthy).isEmpty()
-}
+val SentenceNode.openLeaves
+    get() = leaves.filter { leaf ->
+        val allSentences = leaf.withAllParents.mapTo(mutableSetOf()) { it.content.sentence }
+        val negated: Set<Not> = allSentences.filterTo(mutableSetOf()) { it is Not } as Set<Not>
+        val truthy = allSentences - negated
+        (negated.mapTo(mutableSetOf()) { it.sentence } intersect truthy).isEmpty()
+    }
