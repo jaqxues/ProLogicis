@@ -174,7 +174,7 @@ fun formatTreeAsLatex(vararg premisses: Sentence, conclusionNode: SentenceNode) 
     append("[.{")
     (premisses.toList() + conclusionNode.content.sentence)
         .joinTo(this, separator = "\\\\") { "\${${it.latexFormat}}\$" }
-    append("}")
+    append("} ")
     conclusionNode.children.forEach {
         append(it.latexFormat)
     }
