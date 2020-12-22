@@ -15,38 +15,53 @@ abstract class Sentence {
     infix fun xor(other: Sentence) = Xor(this, other)
     infix fun and(other: Sentence) = And(this, other)
     infix fun iif(other: Sentence) = Biconditional(this, other)
+
+    val isPrimitive get() = this is Symbol || (this is Not && this.sentence is Symbol)
+
+    val deepSimplified: Sentence
+        get() {
+            var current = this
+            while (true) {
+                if (current is Not && current.sentence is Not) {
+                    current = (current.sentence as Not).sentence
+                } else break
+            }
+            return current
+        }
 }
 
 fun not(sentence: Sentence) = Not(sentence)
 
-data class Symbol(val proposition: String): Sentence() {
+data class Symbol(val proposition: String) : Sentence() {
     override fun format() = proposition
 }
 
-data class Or(val sentences: List<Sentence>): Sentence() {
-    constructor(vararg sentences: Sentence): this(sentences.toList())
+data class Or(val sentences: List<Sentence>) : Sentence() {
+    constructor(vararg sentences: Sentence) : this(sentences.toList())
 
     override fun format() = sentences.joinToString(separator = " or ") { it.format() }
 }
 
-data class Xor(val sentences: List<Sentence>): Sentence() {
-    constructor(vararg sentences: Sentence): this(sentences.toList())
+data class Xor(val sentences: List<Sentence>) : Sentence() {
+    constructor(vararg sentences: Sentence) : this(sentences.toList())
 
     override fun format() = sentences.joinToString(separator = " xor ") { it.format() }
 }
 
-data class And(val sentences: List<Sentence>): Sentence() {
-    constructor(vararg sentences: Sentence): this(sentences.toList())
+data class And(val sentences: List<Sentence>) : Sentence() {
+    constructor(vararg sentences: Sentence) : this(sentences.toList())
 
     override fun format() = sentences.joinToString(separator = " and ") { it.format() }
 }
 
-data class Not(val sentence: Sentence): Sentence() {
+data class Not(val sentence: Sentence) : Sentence() {
     override fun format() = "Not(${sentence.format()})"
 }
-data class Implication(val s1: Sentence, val s2: Sentence): Sentence() {
+
+data class Implication(val s1: Sentence, val s2: Sentence) : Sentence() {
     override fun format() = "${s1.format()} -> ${s2.format()}"
 }
-data class Equality(val s1: Sentence, val s2: Sentence): Sentence() {
+
+data class Equality(val s1: Sentence, val s2: Sentence) : Sentence() {
     override fun format() = "${s1.format()} <-> ${s2.format()}"
 }

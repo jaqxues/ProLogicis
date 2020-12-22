@@ -18,16 +18,44 @@ fun main(args: Array<String>) {
     val B = Symbol("B")
     val C = Symbol("C")
     val D = Symbol("D")
+    val E = Symbol("E")
+
+    val P = Symbol("P")
+    val R = Symbol("R")
+    val S = Symbol("S")
+    val T = Symbol("T")
+    val Q = Symbol("Q")
+
+    println(performTreeAlgorithm(
+        not(A implies B) or (C iif D),
+        (not(A) or not(B)) implies not(A or B),
+        entails = not(C) or D
+    ).prettyOutput)
+
+    println(performTreeAlgorithm(
+        (A iif B) implies (not(C) or D),
+        A implies B,
+        entails = (not(C implies B) or (A and C)) implies D
+    ).prettyOutput)
+
+    println(performTreeAlgorithm(
+        (A and not(B)) or (not(B) and E),
+        (A iif B) implies (not(A) implies not(E)),
+        not(A and not(B)),
+        entails = not(E)
+    ).prettyOutput)
 
 
+    println(performTreeAlgorithm(
+        P iif R,
+        (S or T) implies P,
+        R and Q,
+        not(T),
+        entails = R implies not(P)
+    ).prettyOutput)
+}
 
-    val s1 = (not(A implies B)) or (C iif D)
-    val s2 = (not(A) or not(B)) implies not(A or B)
-    val conclusion = not(C) or D
-//    val s1 = A or B
-//    val s2 = D and C
-//    val conclusion = A implies B
-
-
-    performTreeAlgorithm(s1, s2, entails = conclusion)
+val TruthTreeResult.prettyOutput get() = buildString {
+    append(if (valid) "Valid: " else "Invalid: ")
+    append(latexFormat)
 }
