@@ -1,5 +1,5 @@
 plugins {
-    kotlin("js") version "1.4.10"
+    kotlin("js") version "1.4.21"
 }
 
 group = "com.jaqxues"
