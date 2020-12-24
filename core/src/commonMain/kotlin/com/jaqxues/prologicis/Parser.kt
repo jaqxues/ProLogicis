@@ -5,6 +5,13 @@ package com.jaqxues.prologicis
  * This file was created by Jacques Hoffmann (jaqxues) in the Project ProLogicis.<br>
  * Date: 22.12.20 - Time 14:20.
  */
+internal sealed class Token {
+    object OpenParenthesis : Token()
+    object CloseParenthesis : Token()
+    data class Identifier(val content: String) : Token()
+    data class Operation(val op: OperationType) : Token()
+    object EOF : Token()
+}
 
 internal enum class OperationType {
     NOT, AND, OR, IMPLICATION, EQUALITY;
@@ -16,37 +23,9 @@ internal enum class OperationType {
     val isBinary: Boolean get() = this !== NOT
 }
 
-internal sealed class Token {
-    object OpenParenthesis : Token()
-    object CloseParenthesis : Token()
-    data class Identifier(val content: String) : Token()
-    data class Operation(val op: OperationType) : Token()
-    object EOF: Token()
-}
-
-/*
-Symbol -> [a-ZA-Z]+
-E -> Symbol|(E)|E K E|'not' E|
-K -> 'implies'|'->'|'and'|'or'|'iif'|'<->'
-
-Or:
-Sentence -> AtomicSentence|ComplexSentence
-AtomicSentence -> [a-zA-Z_$]+
-ComplexSentence -> (Sentence)|[Sentence]
-                   |not Sentence
-                   |Sentence and Sentence
-                   |Sentence or Sentence
-                   |Sentence implies Sentence
-                   |Sentence iif Sentence
-Operator Precedence: not, and, or, implies, iif
-
-Or:
-E --> P {B P}
-P --> v | "(" E ")" | U P
-B --> "+" | "-" | "*" | "/" | "^"
-U --> "-"
+/**
+ * Algorithm: Following Algorithm found on http://www.engr.mun.ca/~theo/Misc/exp_parsing.htm#shunting_yard
  */
-
 private class Parser(token: Sequence<Token>) {
     val tokenIterator = token.iterator()
     var current = tokenIterator.next()
@@ -129,13 +108,15 @@ private class Parser(token: Sequence<Token>) {
     }
 }
 
-fun parseInput(input: String) {
-    val p = Parser(runLexer(input))
-    p.operators.add(null)
-    p.compileE()
-    p.expect(Token.EOF)
-    check(!p.tokenIterator.hasNext())
-    println(p.operands)
+fun parseInput(input: String): Sentence {
+    with(Parser(runLexer(input))) {
+        operators.add(null)
+        compileE()
+        expect(Token.EOF)
+        check(!tokenIterator.hasNext())
+        check(operands.size == 1 && operators.size == 1 && operators.first() == null)
+        return operands.first()
+    }
 }
 
 abstract class CharNavIterator : CharIterator() {
@@ -151,9 +132,6 @@ val String.navIterator
     }
 
 private fun runLexer(input: String) = sequence {
-    println(OperationType.NOT < OperationType.OR)
-    println()
-    println(input)
     val ci = input.navIterator
     while (ci.hasNext()) {
         when (val c = ci.nextChar()) {
@@ -170,12 +148,9 @@ private fun runLexer(input: String) = sequence {
                     error("String Symbol spanned until EOF signal!")
                 }))
             }
-            '(' -> {
-                yield(Token.OpenParenthesis)
-            }
-            ')' -> {
-                yield(Token.CloseParenthesis)
-            }
+            ' ', '\n' -> Unit
+            '(' -> yield(Token.OpenParenthesis)
+            ')' -> yield(Token.CloseParenthesis)
             in ('a'..'z') + ('A'..'Z') + "_\$" -> {
                 val s = buildString {
                     var char = c
@@ -190,14 +165,16 @@ private fun runLexer(input: String) = sequence {
                         }
                     }
                 }
-                when (s) {
-                    "implies" -> yield(Token.Operation(OperationType.IMPLICATION))
-                    "iif" -> yield(Token.Operation(OperationType.EQUALITY))
-                    "and" -> yield(Token.Operation(OperationType.AND))
-                    "or" -> yield(Token.Operation(OperationType.OR))
-                    "not" -> yield(Token.Operation(OperationType.NOT))
-                    else -> yield(Token.Identifier(s))
-                }
+                yield(
+                    when (s) {
+                        "implies" -> Token.Operation(OperationType.IMPLICATION)
+                        "iif" -> Token.Operation(OperationType.EQUALITY)
+                        "and" -> Token.Operation(OperationType.AND)
+                        "or" -> Token.Operation(OperationType.OR)
+                        "not" -> Token.Operation(OperationType.NOT)
+                        else -> Token.Identifier(s)
+                    }
+                )
             }
             in "<->" -> {
                 val operator = buildString {
@@ -218,7 +195,7 @@ private fun runLexer(input: String) = sequence {
                     else -> error("Unknown Operator '$operator'")
                 }
             }
-            ' ', '\n' -> Unit
+            else -> error("Invalid Character during Tokenization")
         }
     }
     yield(Token.EOF)
