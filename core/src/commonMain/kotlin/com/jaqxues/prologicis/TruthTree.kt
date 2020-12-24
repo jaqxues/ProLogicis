@@ -12,8 +12,14 @@ const val PRIMITIVE = -2
 
 data class NodeContent(val sentence: Sentence, var decomposedAt: Int)
 
-data class TruthTreeResult(val premisses: List<Sentence>, val conclusionNode: SentenceNode, val valid: Boolean) {
+data class TruthTreeResult(
+    val premisses: List<Sentence>,
+    val topNode: SentenceNode,
+    val conclusionNode: SentenceNode,
+    val valid: Boolean
+) {
     val latexFormat get() = formatTreeAsLatex(*premisses.toTypedArray(), conclusionNode = conclusionNode)
+    val graphVizDotFormat get() = topNode.graphVizDotFormat
 }
 
 fun performTreeAlgorithm(vararg premisses: Sentence, entails: Sentence): TruthTreeResult {
@@ -34,13 +40,13 @@ fun performTreeAlgorithm(vararg premisses: Sentence, entails: Sentence): TruthTr
             openLeaves.first().withAllParents.toList().filter { it.content.decomposedAt == -1 }.minByOrNull {
                 val s = it.content.sentence
                 if (s is And || (s is Not && (s.sentence is Or || s.sentence is Implication))) 0 else 1
-            } ?: return TruthTreeResult(premisses.toList(), conclusionNode, false)
+            } ?: return TruthTreeResult(premisses.toList(), top, conclusionNode, false)
         toDecompose.content.decomposedAt = currentStep++
         for (subLeaf in toDecompose.openLeaves) {
             toDecompose.content.sentence.decomposeTo(subLeaf)
         }
     }
-    return TruthTreeResult(premisses.toList(), conclusionNode, true)
+    return TruthTreeResult(premisses.toList(), top, conclusionNode, true)
 }
 
 private fun Sentence.decomposeTo(node: SentenceNode) {

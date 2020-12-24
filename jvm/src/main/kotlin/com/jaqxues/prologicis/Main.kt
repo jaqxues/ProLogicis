@@ -27,15 +27,6 @@ fun main(args: Array<String>) {
     val Q = Symbol("Q")
 
 
-    println("Parsing Tests")
-    println(parseInput("A implies A"))
-    println(parseInput("A implies B"))
-    println(parseInput("not(A) <-> not(B)"))
-    println(parseInput("not A <-> not B"))
-    println(parseInput("A implies (B or C)"))
-    println(parseInput("B or C implies (A and D)"))
-    println(parseInput("Q and not(R) implies (C iif D)"))
-    println()
     println("Tree Algorithms Tests: ")
     println(performTreeAlgorithm(
         not(A implies B) or (C iif D),

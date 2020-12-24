@@ -75,3 +75,33 @@ val SentenceNode.latexFormat: String
         }
         append('}')
     }
+
+val SentenceNode.graphVizDotFormat: String
+    get() = buildString {
+        append("graph {\n")
+        val multiNodes = withAllChildren.toList().let { list ->
+            list.filter { el -> list.count { el.content.sentence == it.content.sentence } > 1 }
+        }
+        multiNodes.forEachIndexed { index, n ->
+            val s = n.content.sentence
+            append("\t")
+            append(index)
+            append(" [label=\"")
+            append(s.format())
+            append("\"];\n")
+        }
+        fun getCorrectFormatFor(node: SentenceNode): Any {
+            if (node in multiNodes) return multiNodes.indexOf(node)
+            val s = node.content.sentence
+            if ("[a-zA-Z_]+".toRegex() matches s.format()) return s.format()
+            return "\"${s.format()}\""
+        }
+        for (child in withAllChildren.drop(1)) {
+            append("\t")
+            append(getCorrectFormatFor(child.parent ?: error("No parent for non-top Node")))
+            append(" -- ")
+            append(getCorrectFormatFor(child))
+            append(";\n")
+        }
+        append("}")
+    }
