@@ -16,7 +16,7 @@ abstract class Sentence {
     infix fun and(other: Sentence) = And(this, other)
     infix fun iif(other: Sentence) = Biconditional(this, other)
 
-    val isPrimitive get() = this is Symbol || (this is Not && this.sentence is Symbol)
+    val isPrimitive get() = this is Symbol || (this is Not && sentence is Symbol)
 
     val deepSimplified: Sentence
         get() {

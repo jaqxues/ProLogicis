@@ -43,7 +43,7 @@ fun performTreeAlgorithm(vararg premisses: Sentence, entails: Sentence): TruthTr
     return TruthTreeResult(premisses.toList(), conclusionNode, true)
 }
 
-fun Sentence.decomposeTo(node: SentenceNode) {
+private fun Sentence.decomposeTo(node: SentenceNode) {
     when (this) {
         is And -> {
             var n = node
@@ -155,7 +155,7 @@ val SentenceNode.openLeaves
         (negated.mapTo(mutableSetOf()) { it.sentence } intersect truthy).isEmpty()
     }
 
-fun unexploredNode(sentence: Sentence, parent: SentenceNode? = null): SentenceNode {
+private fun unexploredNode(sentence: Sentence, parent: SentenceNode? = null): SentenceNode {
     val s = sentence.deepSimplified
     return Node(NodeContent(s, (if (s.isPrimitive) PRIMITIVE else DECOMPOSABLE)), parent)
 }
