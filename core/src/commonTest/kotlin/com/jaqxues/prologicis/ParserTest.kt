@@ -4,7 +4,6 @@ import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFails
 
-
 /**
  * This file was created by Jacques Hoffmann (jaqxues) in the Project ProLogicis.<br>
  * Date: 24.12.20 - Time 17:50.
