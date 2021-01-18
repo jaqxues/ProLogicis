@@ -55,6 +55,38 @@ fun main(args: Array<String>) {
         not(T),
         entails = R implies not(P)
     ).prettyOutput)
+
+    println(performTreeAlgorithm(
+        not(A implies B) or (C iif D),
+        (not(A) or not(B)) implies not(A or B),
+        entails = not(C) or D,
+        bruteforceMethod = false
+    ).prettyOutput)
+
+    println(performTreeAlgorithm(
+        (A iif B) implies (not(C) or D),
+        A implies B,
+        entails = (not(C implies B) or (A and C)) implies D,
+        bruteforceMethod = false
+    ).prettyOutput)
+
+    println(performTreeAlgorithm(
+        (A and not(B)) or (not(B) and E),
+        (A iif B) implies (not(A) implies not(E)),
+        not(A and not(B)),
+        entails = not(E),
+        bruteforceMethod = false
+    ).prettyOutput)
+
+
+    println(performTreeAlgorithm(
+        P iif R,
+        (S or T) implies P,
+        R and Q,
+        not(T),
+        entails = R implies not(P),
+        bruteforceMethod = false
+    ).prettyOutput)
 }
 
 val TruthTreeResult.prettyOutput get() = buildString {
