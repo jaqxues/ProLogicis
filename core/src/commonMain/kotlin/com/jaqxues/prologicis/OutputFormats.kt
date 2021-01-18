@@ -5,13 +5,13 @@ package com.jaqxues.prologicis
  * This file was created by Jacques Hoffmann (jaqxues) in the Project ProLogicis.<br>
  * Date: 22.12.20 - Time 13:51.
  */
-fun formatTreeAsLatex(vararg premisses: Sentence, conclusionNode: SentenceNode) = buildString {
+fun formatTreeAsLatex(vararg premisses: Sentence, conclusionNode: TruthTreeNode) = buildString {
     append("[.{")
     (premisses.toList() + conclusionNode.content.sentence)
         .joinTo(this, separator = "\\\\") { "\${${it.latexFormat}}\$" }
     append("} ")
     conclusionNode.children.forEach {
-        append(it.latexFormat)
+        append(it.latexFormat())
     }
     append(" ]")
 }
@@ -29,26 +29,26 @@ val Sentence.latexFormat: String
                 append("}")
             }
             is And -> {
-                append(sentences.joinToString(separator = " \\et ") { it.latexFormat })
+                append(sentences.joinToString(separator = " \\et ") { it.withParentheses(Sentence::latexFormat) })
             }
             is Or -> {
-                append(sentences.joinToString(separator = " \\ou ") { it.latexFormat })
+                append(sentences.joinToString(separator = " \\ou ") { it.withParentheses(Sentence::latexFormat) })
             }
             is Implication -> {
-                append(s1.latexFormat)
+                append(s1.withParentheses(Sentence::latexFormat))
                 append(" \\si ")
-                append(s2.latexFormat)
+                append(s2.withParentheses(Sentence::latexFormat))
             }
             is Equality -> {
-                append(s1.latexFormat)
+                append(s1.withParentheses(Sentence::latexFormat))
                 append(" \\eq ")
-                append(s2.latexFormat)
+                append(s2.withParentheses(Sentence::latexFormat))
             }
         }
     }
 
-val SentenceNode.latexFormat: String
-    get() = buildString {
+fun <C: INodeContent> Node<C>.latexFormat() : String
+     = buildString {
         if (withAllChildren.any { it.children.size > 1 }) {
             append(" [.")
             append("{")
@@ -63,7 +63,7 @@ val SentenceNode.latexFormat: String
             current = current.parent!!
             append("} ")
             current.children.forEach {
-                append(it.latexFormat)
+                append(it.latexFormat())
                 append(' ')
             }
             append(']')
@@ -76,7 +76,7 @@ val SentenceNode.latexFormat: String
         append('}')
     }
 
-val SentenceNode.graphVizDotFormat: String
+val <C: INodeContent> Node<C>.graphVizDotFormat: String
     get() = buildString {
         append("graph {\n")
         val multiNodes = withAllChildren.toList().let { list ->
@@ -90,7 +90,7 @@ val SentenceNode.graphVizDotFormat: String
             append(s.format())
             append("\"];\n")
         }
-        fun getCorrectFormatFor(node: SentenceNode): Any {
+        fun getCorrectFormatFor(node: Node<C>): Any {
             if (node in multiNodes) return multiNodes.indexOf(node)
             val s = node.content.sentence
             if ("[a-zA-Z_]+".toRegex() matches s.format()) return s.format()

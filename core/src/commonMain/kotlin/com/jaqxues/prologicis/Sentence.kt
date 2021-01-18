@@ -39,19 +39,22 @@ data class Symbol(val proposition: String) : Sentence() {
 data class Or(val sentences: List<Sentence>) : Sentence() {
     constructor(vararg sentences: Sentence) : this(sentences.toList())
 
-    override fun format() = sentences.joinToString(separator = " or ") { it.format() }
+    override fun format() =
+        sentences.joinToString(separator = " or ", transform = Sentence::withParentheses)
 }
 
 data class Xor(val sentences: List<Sentence>) : Sentence() {
     constructor(vararg sentences: Sentence) : this(sentences.toList())
 
-    override fun format() = sentences.joinToString(separator = " xor ") { it.format() }
+    override fun format() =
+        sentences.joinToString(separator = " xor ", transform = Sentence::withParentheses)
 }
 
 data class And(val sentences: List<Sentence>) : Sentence() {
     constructor(vararg sentences: Sentence) : this(sentences.toList())
 
-    override fun format() = sentences.joinToString(separator = " and ") { it.format() }
+    override fun format() =
+        sentences.joinToString(separator = " and ", transform = Sentence::withParentheses)
 }
 
 data class Not(val sentence: Sentence) : Sentence() {
@@ -59,9 +62,18 @@ data class Not(val sentence: Sentence) : Sentence() {
 }
 
 data class Implication(val s1: Sentence, val s2: Sentence) : Sentence() {
-    override fun format() = "${s1.format()} -> ${s2.format()}"
+    override fun format() = "${s1.withParentheses()} -> ${s2.withParentheses()}"
 }
 
 data class Equality(val s1: Sentence, val s2: Sentence) : Sentence() {
-    override fun format() = "${s1.format()} <-> ${s2.format()}"
+    override fun format() = "${s1.withParentheses()} <-> ${s2.withParentheses()}"
+}
+
+fun Sentence.withParentheses(action: Sentence.() -> String = Sentence::format) = buildString {
+    val needsParens = this@withParentheses !is Symbol && this@withParentheses !is Not
+    if (needsParens)
+        append('(')
+    append(action())
+    if (needsParens)
+        append(')')
 }
