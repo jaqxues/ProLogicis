@@ -12,7 +12,7 @@ import com.jaqxues.prologicis.parseInput
 import com.jaqxues.prologicis.performTreeAlgorithm
 import kotlinx.coroutines.*
 
-fun main() = Window(title = "Compose for Desktop") {
+fun main() = Window(title = "ProLogicis") {
     var inputState by remember { mutableStateOf("") }
     var output by remember { mutableStateOf("") }
     var clipBoardContent by remember { mutableStateOf<AnnotatedString?>(null) }
