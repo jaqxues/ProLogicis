@@ -124,8 +124,8 @@ data class TruthTreeResult(
 ) {
     val latexFormat
         get() = formatTreeAsLatex(
-            *premisses.toTypedArray(),
-            conclusionNode = conclusionNode
+            premisses.size,
+            topNode = topNode
         )
     val graphVizDotFormat get() = topNode.graphVizDotFormat
 }

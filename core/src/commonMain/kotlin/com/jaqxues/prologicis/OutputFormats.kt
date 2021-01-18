@@ -5,12 +5,16 @@ package com.jaqxues.prologicis
  * This file was created by Jacques Hoffmann (jaqxues) in the Project ProLogicis.<br>
  * Date: 22.12.20 - Time 13:51.
  */
-fun formatTreeAsLatex(vararg premisses: Sentence, conclusionNode: TruthTreeNode) = buildString {
+fun formatTreeAsLatex(nbPremisses: Int, topNode: TruthTreeNode) = buildString {
     append("[.{")
-    (premisses.toList() + conclusionNode.content.sentence)
-        .joinTo(this, separator = "\\\\") { "\${${it.latexFormat}}\$" }
+
+    topNode.withAllChildren.take(nbPremisses + 1)
+        .joinTo(this, separator = "\\\\") {
+            val f = "\${${it.content.sentence.latexFormat}}\$"
+            if (it.content.decomposedAt > 0) f + " ^" + it.content.decomposedAt else f
+        }
     append("} ")
-    conclusionNode.children.forEach {
+    topNode.getNthChild(nbPremisses).children.forEach {
         append(it.latexFormat())
     }
     append(" ]")
@@ -57,6 +61,10 @@ fun <C: INodeContent> Node<C>.latexFormat() : String
                 append("{\$")
                 append(current.content.sentence.latexFormat)
                 append("\$}")
+                if (current.content.decomposedAt > 0) {
+                    append(" ^")
+                    append(current.content.decomposedAt)
+                }
                 append("\\\\")
                 current = current.children.first()
             }
