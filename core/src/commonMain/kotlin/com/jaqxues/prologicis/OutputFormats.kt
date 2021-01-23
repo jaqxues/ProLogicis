@@ -7,6 +7,7 @@ package com.jaqxues.prologicis
  */
 fun formatTreeAsLatex(nbPremisses: Int, topNode: TruthTreeNode) = buildString {
     append("[.{")
+    val openLeaves = topNode.getOpenWith().toSet()
 
     topNode.withAllChildren.take(nbPremisses + 1)
         .joinTo(this, separator = "\\\\") {
@@ -15,7 +16,7 @@ fun formatTreeAsLatex(nbPremisses: Int, topNode: TruthTreeNode) = buildString {
         }
     append("} ")
     topNode.getNthChild(nbPremisses).children.forEach {
-        append(it.latexFormat())
+        append(it.latexFormat(openLeaves))
     }
     append(" ]")
 }
@@ -51,7 +52,7 @@ val Sentence.latexFormat: String
         }
     }
 
-fun <C: INodeContent> Node<C>.latexFormat() : String
+fun <C: INodeContent> Node<C>.latexFormat(openLeaves: Set<Node<C>>) : String
      = buildString {
         if (withAllChildren.any { it.children.size > 1 }) {
             append(" [.")
@@ -71,7 +72,7 @@ fun <C: INodeContent> Node<C>.latexFormat() : String
             current = current.parent!!
             append("} ")
             current.children.forEach {
-                append(it.latexFormat())
+                append(it.latexFormat(openLeaves))
                 append(' ')
             }
             append(']')
@@ -79,7 +80,16 @@ fun <C: INodeContent> Node<C>.latexFormat() : String
         }
         append('{')
         withAllChildren.joinTo(this, separator = "\\\\") {
-            "{\$${it.content.sentence.latexFormat}\$}"
+            buildString {
+                append("{\$${it.content.sentence.latexFormat}\$}")
+                if (it.isLeaf) {
+                    append("\\\\")
+                    if (it in openLeaves)
+                        append("...")
+                    else
+                        append("\$\\times\$")
+                }
+            }
         }
         append('}')
     }

@@ -97,6 +97,8 @@ class Node<T>(
         return current
     }
 
+    val isLeaf: Boolean get() = children.isEmpty()
+
     internal fun addChild(child: Node<T>) = child.also { children = children + it }
 }
 
