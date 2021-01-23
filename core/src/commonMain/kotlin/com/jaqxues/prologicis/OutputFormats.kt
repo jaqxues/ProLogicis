@@ -59,13 +59,7 @@ fun <C: INodeContent> Node<C>.latexFormat(openLeaves: Set<Node<C>>) : String
             append("{")
             var current = this@latexFormat
             while (current.parent!!.children.size <= 1 || current == this@latexFormat) {
-                append("{\$")
-                append(current.content.sentence.latexFormat)
-                append("\$}")
-                if (current.content.decomposedAt > 0) {
-                    append(" ^")
-                    append(current.content.decomposedAt)
-                }
+                current.formatLatexSingleNode(openLeaves, builder = this)
                 append("\\\\")
                 current = current.children.first()
             }
@@ -80,19 +74,34 @@ fun <C: INodeContent> Node<C>.latexFormat(openLeaves: Set<Node<C>>) : String
         }
         append('{')
         withAllChildren.joinTo(this, separator = "\\\\") {
-            buildString {
-                append("{\$${it.content.sentence.latexFormat}\$}")
-                if (it.isLeaf) {
-                    append("\\\\")
-                    if (it in openLeaves)
-                        append("...")
-                    else
-                        append("\$\\times\$")
-                }
-            }
+            it.formatLatexSingleNode(openLeaves).toString()
         }
         append('}')
     }
+
+private fun <C: INodeContent> Node<C>.formatLatexSingleNode(
+    openLeaves: Set<Node<C>>,
+    builder: StringBuilder = StringBuilder()
+) = builder.apply {
+    append("{\$")
+    append(content.sentence.latexFormat)
+    append("\$}")
+    if (content.decomposedAt > 0) {
+        append(" ^")
+        val needsParens = content.decomposedAt > 9
+        if (needsParens)
+            append("{")
+        append(content.decomposedAt)
+        if (needsParens)
+        append("}")
+    } else if (isLeaf) {
+        append("\\\\")
+        if (this@formatLatexSingleNode in openLeaves)
+            append("...")
+        else
+            append("\$\\times\$")
+    }
+}
 
 val <C: INodeContent> Node<C>.graphVizDotFormat: String
     get() = buildString {
