@@ -12,6 +12,7 @@ repositories {
 dependencies {
     implementation(project(":core"))
     testImplementation(kotlin("test-js"))
+    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core-js:1.4.2")
 }
 
 kotlin {

@@ -2,7 +2,10 @@ package com.jaqxues.prologicis
 
 import kotlinx.browser.document
 import kotlinx.browser.window
+import kotlinx.coroutines.*
+import org.w3c.dom.HTMLButtonElement
 import org.w3c.dom.HTMLInputElement
+import org.w3c.dom.HTMLTextAreaElement
 
 /**
  * This file was created by Jacques Hoffmann (jaqxues) in the Project ProLogicis.<br>
@@ -10,18 +13,47 @@ import org.w3c.dom.HTMLInputElement
  */
 fun main() {
     window.onload = {
-        console.log(document)
-        console.log(document.getElementById("form_formula"))
+        var job: Job? = null
         document.getElementById("form_formula")!!.addEventListener("submit", { evt ->
             evt.preventDefault()
-            val latexFormat = try {
-                val value = (document.getElementById("formula")!! as HTMLInputElement).value
-                val sentences = value.split(";").map { parseInput(it.trim()) }
-                performTreeAlgorithm(*sentences.take(sentences.size).toTypedArray(), entails = sentences.last()).latexFormat
+            try {
+                job?.cancel()
+                val inContent = (document.getElementById("formula")!! as HTMLTextAreaElement).value
+                val bruteforce = (document.getElementById("bruteforce")!! as HTMLInputElement).checked
+                val sentences = inContent.split("[;\n]+".toRegex()).map { parseInput(it.trim()) }
+
+                if (bruteforce) {
+                    htmlOutput = "Processing with Brute force... Disable Brute force if it takes too long."
+                }
+                check(sentences.size > 1) { "You need to input at least 2 sentences" }
+
+                job = GlobalScope.launch(Dispatchers.Default) {
+                    if (bruteforce) // Wait 5 milliseconds to allow output to update
+                        delay(5)
+                    val output = try {
+                        performTreeAlgorithm(
+                            *sentences.take(sentences.size - 1).toTypedArray(),
+                            entails = sentences.last(),
+                            bruteforceMethod = bruteforce
+                        ).latexFormat
+                    } catch (t: Throwable) {
+                        "Error processing sentences"
+                    }
+                    withContext(Dispatchers.Main) {
+                        htmlOutput = output
+                    }
+                    job = null
+                }
             } catch (t: Throwable) {
-                "Error Parsing or Processing"
+                t.printStackTrace()
+                htmlOutput = "Error initializing and parsing given sentences. Check Console for errors"
             }
-            document.getElementById("tt_out")!!.innerHTML = latexFormat
         })
     }
 }
+
+var htmlOutput: String = ""
+    set(new) {
+        field = new
+        document.getElementById("tt_out")!!.innerHTML = new
+    }
