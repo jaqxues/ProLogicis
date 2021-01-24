@@ -20,7 +20,7 @@ fun main() {
                 job?.cancel()
                 val inContent = (document.getElementById("formula")!! as HTMLTextAreaElement).value
                 val bruteforce = (document.getElementById("bruteforce")!! as HTMLInputElement).checked
-                val sentences = inContent.split("[;\n]+".toRegex()).map { parseInput(it.trim()) }
+                val sentences = inContent.trim().split("[;\n]+".toRegex()).map { parseInput(it.trim()) }
 
                 if (bruteforce) {
                     htmlOutput = "Processing with Brute force... Disable Brute force if it takes too long."
