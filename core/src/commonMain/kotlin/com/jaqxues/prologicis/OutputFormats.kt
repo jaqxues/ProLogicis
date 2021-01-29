@@ -103,32 +103,34 @@ private fun <C: INodeContent> Node<C>.formatLatexSingleNode(
     }
 }
 
-val <C: INodeContent> Node<C>.graphVizDotFormat: String
-    get() = buildString {
-        append("graph {\n")
-        val multiNodes = withAllChildren.toList().let { list ->
-            list.filter { el -> list.count { el.content.sentence == it.content.sentence } > 1 }
-        }
-        multiNodes.forEachIndexed { index, n ->
-            val s = n.content.sentence
-            append("\t")
-            append(index)
-            append(" [label=\"")
-            append(s.format())
-            append("\"];\n")
-        }
-        fun getCorrectFormatFor(node: Node<C>): Any {
-            if (node in multiNodes) return multiNodes.indexOf(node)
-            val s = node.content.sentence
-            if ("[a-zA-Z_]+".toRegex() matches s.format()) return s.format()
-            return "\"${s.format()}\""
-        }
-        for (child in withAllChildren.drop(1)) {
-            append("\t")
-            append(getCorrectFormatFor(child.parent ?: error("No parent for non-top Node")))
-            append(" -- ")
-            append(getCorrectFormatFor(child))
-            append(";\n")
-        }
-        append("}")
+fun <C: INodeContent> Node<C>.graphVizDotFormat(directed: Boolean) = buildString {
+    if (directed)
+        append("di")
+    append("graph {\n")
+    val multiNodes = withAllChildren.toList().let { list ->
+        list.filter { el -> list.count { el.content.sentence == it.content.sentence } > 1 }
     }
+    multiNodes.forEachIndexed { index, n ->
+        val s = n.content.sentence
+        append("\t")
+        append(index)
+        append(" [label=\"")
+        append(s.format())
+        append("\"];\n")
+    }
+    fun getCorrectFormatFor(node: Node<C>): Any {
+        if (node in multiNodes) return multiNodes.indexOf(node)
+        val s = node.content.sentence
+        if ("[a-zA-Z_]+".toRegex() matches s.format()) return s.format()
+        return "\"${s.format()}\""
+    }
+    val edgeOp = if (directed) " -> " else " -- "
+    for (child in withAllChildren.drop(1)) {
+        append("\t")
+        append(getCorrectFormatFor(child.parent ?: error("No parent for non-top Node")))
+        append(edgeOp)
+        append(getCorrectFormatFor(child))
+        append(";\n")
+    }
+    append("}")
+}

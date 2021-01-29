@@ -35,8 +35,12 @@ fun main() {
                             *sentences.take(sentences.size - 1).toTypedArray(),
                             entails = sentences.last(),
                             bruteforceMethod = bruteforce
-                        ).latexFormat
+                        ).let {
+                            useGraphvizDotOut(it.digraphVizDotFormat)
+                            it.latexFormat
+                        }
                     } catch (t: Throwable) {
+                        t.printStackTrace()
                         "Error processing sentences"
                     }
                     withContext(Dispatchers.Main) {
@@ -57,3 +61,5 @@ var htmlOutput: String = ""
         field = new
         document.getElementById("tt_out")!!.innerHTML = new
     }
+
+external fun useGraphvizDotOut(output: String)

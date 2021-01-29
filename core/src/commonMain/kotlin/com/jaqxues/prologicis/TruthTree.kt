@@ -129,7 +129,9 @@ data class TruthTreeResult(
             premisses.size,
             topNode = topNode
         )
-    val graphVizDotFormat get() = topNode.graphVizDotFormat
+
+    val graphVizDotFormat get() = topNode.graphVizDotFormat(false)
+    val digraphVizDotFormat get() = topNode.graphVizDotFormat(true)
 }
 
 private fun SentenceNode.deepCopy(parent: SentenceNode? = null): SentenceNode {
