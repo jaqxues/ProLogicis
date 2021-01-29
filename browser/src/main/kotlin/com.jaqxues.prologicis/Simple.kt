@@ -3,8 +3,8 @@ package com.jaqxues.prologicis
 import kotlinx.browser.document
 import kotlinx.browser.window
 import kotlinx.coroutines.*
-import org.w3c.dom.HTMLButtonElement
 import org.w3c.dom.HTMLInputElement
+import org.w3c.dom.HTMLSelectElement
 import org.w3c.dom.HTMLTextAreaElement
 
 /**
@@ -20,6 +20,7 @@ fun main() {
                 job?.cancel()
                 val inContent = (document.getElementById("formula")!! as HTMLTextAreaElement).value
                 val bruteforce = (document.getElementById("bruteforce")!! as HTMLInputElement).checked
+                val outputFormat = (document.getElementById("output_type")!! as HTMLSelectElement).value
                 val sentences = inContent.trim().split("[;\n]+".toRegex()).map { parseInput(it.trim()) }
 
                 if (bruteforce) {
@@ -37,7 +38,13 @@ fun main() {
                             bruteforceMethod = bruteforce
                         ).let {
                             useGraphvizDotOut(it.digraphVizDotFormat)
-                            it.latexFormat
+                            when (outputFormat) {
+                                "latex" -> it.latexFormat
+                                "graph" -> it.graphVizDotFormat
+                                "digraph" -> it.digraphVizDotFormat
+                                "none" -> "Success, updating Graph"
+                                else -> throw IllegalArgumentException("Selected unknown output format $outputFormat")
+                            }
                         }
                     } catch (t: Throwable) {
                         t.printStackTrace()

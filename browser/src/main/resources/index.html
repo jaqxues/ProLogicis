@@ -76,7 +76,7 @@
     </p><br>
     <form id="form_formula">
         <label for="formula">
-            Formula (Enter the Logical Sentences and separate them with ';' or a new line):
+            Formula (Enter the Logical Sentences and separate them with ';' or a new line. The last listed sentence will be used as conclusion):
         </label><br><br>
         <textarea id="formula" name="formula" rows="7" cols="100"></textarea><br><br>
         <input id="bruteforce" type="checkbox" name="bruteforce" checked>
@@ -84,15 +84,26 @@
             Use bruteforce method, with full recursion to find optimal way. This will take longer
             (perhaps too long since there are no possible optimizations)
         </label><br><br>
+        <label for="output_type">Selected output format: </label>
+        <select id="output_type" name="output_type">
+            <option value="latex">Latex</option>
+            <option value="graph">DOT Graph</option>
+            <option value="digraph">Directed DOT Graph</option>
+            <option value="none">None (only visualization)</option>
+        </select><br><br>
         <input type="submit" value="Run Truth Tree">
     </form>
     <br><br>
     <h3>Output:</h3>
-    <code id="tt_out">
-        Input Example:<br><br>
-        (A iif B) implies (not(C) or D)<br>
-        A implies B<br><br>
-        (not(C implies B) or (A and C)) implies D
+    <code>
+        <pre id="tt_out" style="white-space: pre-wrap;">
+Input Example:
+
+(A iif B) implies (not(C) or D)
+A implies B
+
+(not(C implies B) or (A and C)) implies D
+        </pre>
     </code><br><br>
     <h2>Supported Operations for propositional logic</h2>
     <table id="t01">
