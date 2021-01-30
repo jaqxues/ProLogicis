@@ -67,6 +67,7 @@
 </style>
 
 <body>
+<script src="browser.js"></script>
 <div id="root">
     <h1>ProLogicis</h1>
     <p>
@@ -83,18 +84,25 @@
         <label for="bruteforce">
             Use bruteforce method, with full recursion to find optimal way. This will take longer
             (perhaps too long since there are no possible optimizations)
+        </label><br>
+        <input id="visualize" type="checkbox" name="visualize" checked>
+        <label for="visualize">
+            Visualizing the Graph in the Browser (using DagreJs)
         </label><br><br>
         <label for="output_type">Selected output format: </label>
         <select id="output_type" name="output_type">
+            <option value="none">None (only visualization)</option>
             <option value="latex">Latex</option>
             <option value="graph">DOT Graph</option>
             <option value="digraph">Directed DOT Graph</option>
-            <option value="none">None (only visualization)</option>
         </select><br><br>
         <input type="submit" value="Run Truth Tree">
     </form>
     <br><br>
-    <h3>Output:</h3>
+    <div id="viz-container">
+        <h3>Visualized Graph:</h3>
+    </div>
+    <h3>Formatted Text Output:</h3>
     <code>
         <pre id="tt_out" style="white-space: pre-wrap;">
 Input Example:
@@ -138,18 +146,13 @@ A implies B
             <td>not(A)</td>
         </tr>
     </table>
-    <h3>Visualized Graph:</h3>
-    <div id="viz-container"></div>
 </div>
-<script src="browser.js"></script>
 <script src="https://dagrejs.github.io/project/dagre-d3/latest/dagre-d3.min.js"></script>
 <script src="http://dagrejs.github.io/project/graphlib-dot/latest/graphlib-dot.min.js"></script>
 <script src="https://d3js.org/d3.v6.js"></script>
 <script>
     const svg = d3.select("#viz-container")
         .append("svg")
-        .attr("width", "100%")
-        .attr("height", 1200)
         .call(d3.zoom()
             .on('zoom', (event) => {
                 svg.attr('transform', event.transform);
@@ -159,7 +162,10 @@ A implies B
     // Create and configure the renderer
     const render = dagreD3.render();
 
-    function useGraphvizDotOut(output) {
+    function visualizeGraph(output) {
+        d3.select("#viz-container svg")
+            .attr("width", "100%")
+            .attr("height", 1200)
         let g;
         try {
             g = graphlibDot.read(output);
@@ -179,6 +185,11 @@ A implies B
         };
 
         d3.select("svg g").call(render, g);
+    }
+    function hideVisualization() {
+        d3.select("#viz-container svg")
+        .attr("width", 100)
+        .attr("height", 100)
     }
 </script>
 </body>

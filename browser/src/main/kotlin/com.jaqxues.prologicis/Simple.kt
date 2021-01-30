@@ -20,6 +20,7 @@ fun main() {
                 job?.cancel()
                 val inContent = (document.getElementById("formula")!! as HTMLTextAreaElement).value
                 val bruteforce = (document.getElementById("bruteforce")!! as HTMLInputElement).checked
+                val visualize = (document.getElementById("visualize")!! as HTMLInputElement).checked
                 val outputFormat = (document.getElementById("output_type")!! as HTMLSelectElement).value
                 val sentences = inContent.trim().split("[;\n]+".toRegex()).map { parseInput(it.trim()) }
 
@@ -37,7 +38,10 @@ fun main() {
                             entails = sentences.last(),
                             bruteforceMethod = bruteforce
                         ).let {
-                            useGraphvizDotOut(it.digraphVizDotFormat)
+                            if (visualize)
+                                visualizeGraph(it.digraphVizDotFormat)
+                            else
+                                hideVisualization()
                             when (outputFormat) {
                                 "latex" -> it.latexFormat
                                 "graph" -> it.graphVizDotFormat
@@ -69,4 +73,5 @@ var htmlOutput: String = ""
         document.getElementById("tt_out")!!.innerHTML = new
     }
 
-external fun useGraphvizDotOut(output: String)
+external fun visualizeGraph(output: String)
+external fun hideVisualization()
